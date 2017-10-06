@@ -100,15 +100,27 @@ class SQLObject
       VALUES
         (#{question_marks})
     SQL
-    
+
     self.id = DBConnection.last_insert_row_id
   end
 
   def update
-    # ...
+    columns = self.class.columns.drop(1)
+    set_line = columns.map {|col| "#{col} = ?"}.join(", ")
+
+    DBConnection.execute(<<-SQL, *attribute_values.drop(1).push(self.id))
+      UPDATE
+        #{self.class.table_name}
+      SET
+        #{set_line}
+      WHERE
+        #{self.class.table_name}.id = ?
+    SQL
+
+
   end
 
   def save
-    # ...
+    id.nil? ? insert : update
   end
 end
